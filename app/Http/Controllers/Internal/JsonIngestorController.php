@@ -86,32 +86,9 @@ class JsonIngestorController extends Controller
         $payloadRequest = new StorePartPriceObservationsRequest;
         $validator = Validator::make($payload, $payloadRequest->rules());
 
-        $validator->after(function ($validator) use ($payload): void {
-            $extraTopLevelKeys = array_diff(array_keys($payload), ['observations']);
-
-            if ($extraTopLevelKeys !== []) {
-                $validator->errors()->add(
-                    'request',
-                    'The JSON root may contain only the observations key.'
-                );
-            }
-
-            foreach ($payload['observations'] ?? [] as $index => $observation) {
-                if (! is_array($observation)) {
-                    continue;
-                }
-
-                $from = $observation['production_from'] ?? null;
-                $to = $observation['production_to'] ?? null;
-
-                if ($from !== null && $to !== null && (int) $to < (int) $from) {
-                    $validator->errors()->add(
-                        "observations.$index.production_to",
-                        'The production_to year must be greater than or equal to production_from.'
-                    );
-                }
-            }
-        });
+        $validator->after(
+            fn ($validator) => StorePartPriceObservationsRequest::addPayloadValidationErrors($validator, $payload)
+        );
 
         return $validator->validate()['observations'];
     }

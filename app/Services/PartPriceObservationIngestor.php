@@ -20,10 +20,10 @@ class PartPriceObservationIngestor
             foreach ($observations as $observation) {
                 $marque = Marque::where('libelle', $observation['marque'])->firstOrFail();
 
-                $vehicleModel = VehicleModel::firstOrCreate([
-                    'marque_id' => $marque->id,
-                    'libelle' => $observation['model'],
-                ]);
+                $vehicleModel = VehicleModel::query()
+                    ->where('marque_id', $marque->id)
+                    ->where('libelle', $observation['model'])
+                    ->firstOrFail();
 
                 $part = Part::where('libelle', $observation['part'])->firstOrFail();
                 $source = Source::where('libelle', $observation['source'])->firstOrFail();

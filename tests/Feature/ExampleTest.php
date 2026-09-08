@@ -28,6 +28,6 @@ class ExampleTest extends TestCase
     {
         $response = $this->post('/internal/ingest/validate');
 
-        $response->assertSessionHasErrors('json_file');
+        $response->assertSessionHasErrors('json_payload');
     }
 }

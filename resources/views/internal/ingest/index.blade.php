@@ -120,7 +120,7 @@
   "observations": [
     {
       "marque": "Renault",
-      "model": "Clio IV",
+      "model": "Clio",
       "part": "Pare-choc Avant",
       "production_from": 2012,
       "production_to": 2016,
@@ -141,7 +141,8 @@
                 <div class="border-t border-slate-200 p-4 text-xs leading-5 text-slate-600">
                     <ul class="list-disc space-y-1.5 pl-5">
                         <li>The root object may contain only <code>observations</code>.</li>
-                        <li>Marque, part, and source must already exist in reference data.</li>
+                        <li>Marque, model, part, and source must already exist in reference data.</li>
+                        <li>The model must belong to the submitted marque.</li>
                         <li>Type must be original, adaptable, or occasion.</li>
                         <li>Price must be greater than zero.</li>
                         <li>Production years are optional, but the end year cannot precede the start year.</li>

@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             MarqueSeeder::class,
+            ModelSeeder::class,
             PartSeeder::class,
             SourceSeeder::class,
         ]);
