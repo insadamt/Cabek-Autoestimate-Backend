@@ -31,22 +31,22 @@ export default function InternalLayout({ children }) {
     const { url } = usePage();
 
     return (
-        <div className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
-            <aside className="border-b border-slate-800 bg-[#11161b] text-slate-200 lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r">
+        <div className="min-h-screen bg-slate-50 lg:grid lg:grid-cols-[260px_minmax(0,1fr)]">
+            <aside className="border-b border-slate-200 bg-white text-slate-700 shadow-sm lg:sticky lg:top-0 lg:h-screen lg:border-b-0 lg:border-r lg:shadow-none">
                 <div className="flex h-16 items-center justify-between px-4 sm:px-6 lg:h-auto lg:block lg:px-5 lg:pb-5 lg:pt-6">
                     <Link href="/internal/explorer" className="flex items-center gap-3">
-                        <div className="grid size-10 place-items-center rounded-xl bg-teal-400 text-sm font-black tracking-tight text-slate-950 shadow-lg shadow-teal-950/20">
+                        <div className="grid size-10 place-items-center rounded-xl bg-teal-700 text-sm font-black tracking-tight text-white shadow-sm shadow-teal-900/10">
                             CA
                         </div>
                         <div>
-                            <div className="text-sm font-semibold tracking-tight text-white">Cabek AutoEstimate</div>
-                            <div className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-500">
+                            <div className="text-sm font-semibold tracking-tight text-slate-950">Cabek AutoEstimate</div>
+                            <div className="mt-0.5 text-[11px] font-medium uppercase tracking-[0.16em] text-slate-400">
                                 Market intelligence
                             </div>
                         </div>
                     </Link>
 
-                    <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-400 lg:mt-5 lg:inline-flex">
+                    <div className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-teal-700 lg:mt-5 lg:inline-flex">
                         Internal
                     </div>
                 </div>
@@ -60,11 +60,11 @@ export default function InternalLayout({ children }) {
                             return (
                                 <div
                                     key={item.label}
-                                    className="hidden items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-600 lg:flex"
+                                    className="hidden items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-400 lg:flex"
                                 >
                                     <Icon className="size-4" />
                                     <span>{item.label}</span>
-                                    <span className="ml-auto text-[9px] uppercase tracking-widest text-slate-700">Soon</span>
+                                    <span className="ml-auto text-[9px] uppercase tracking-widest text-slate-300">Soon</span>
                                 </div>
                             );
                         }
@@ -75,8 +75,8 @@ export default function InternalLayout({ children }) {
                                 href={item.href}
                                 className={`flex min-w-max items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-semibold transition ${
                                     active
-                                        ? 'bg-white text-slate-950 shadow-sm'
-                                        : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                        ? 'bg-teal-50 text-teal-800 ring-1 ring-inset ring-teal-200'
+                                        : 'text-slate-600 hover:bg-slate-50 hover:text-slate-950'
                                 }`}
                             >
                                 <Icon className="size-4" />
@@ -87,9 +87,9 @@ export default function InternalLayout({ children }) {
                 </nav>
 
                 <div className="mt-auto hidden px-5 pb-6 pt-8 lg:block">
-                    <div className="rounded-2xl border border-white/10 bg-white/[0.035] p-4">
-                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-300">
-                            <span className="size-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.08)]" />
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                        <div className="flex items-center gap-2 text-xs font-semibold text-slate-700">
+                            <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.08)]" />
                             Pricing service
                         </div>
                         <p className="mt-2 text-xs leading-5 text-slate-500">
