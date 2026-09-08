@@ -9,7 +9,7 @@
 <body class="min-h-screen bg-slate-100 text-slate-900 antialiased">
     <header class="sticky top-0 z-30 border-b border-slate-300 bg-white">
         <div class="mx-auto flex min-h-14 max-w-[1500px] flex-wrap items-center gap-x-6 px-4 sm:px-6 lg:px-8">
-            <a href="{{ route('internal.explorer') }}" class="py-3 text-sm font-semibold text-slate-950">
+            <a href="{{ route('internal.statistics') }}" class="py-3 text-sm font-semibold text-slate-950">
                 Cabek AutoEstimate
             </a>
 
@@ -18,6 +18,13 @@
             </span>
 
             <nav class="order-3 flex w-full gap-5 border-t border-slate-200 text-sm sm:order-none sm:ml-auto sm:w-auto sm:border-t-0" aria-label="Internal tools">
+                <a
+                    href="{{ route('internal.statistics') }}"
+                    @if (request()->routeIs('internal.statistics')) aria-current="page" @endif
+                    class="border-b-2 py-3 font-medium {{ request()->routeIs('internal.statistics') ? 'border-slate-950 text-slate-950' : 'border-transparent text-slate-500 hover:text-slate-900' }}"
+                >
+                    Statistics
+                </a>
                 <a
                     href="{{ route('internal.explorer') }}"
                     @if (request()->routeIs('internal.explorer')) aria-current="page" @endif

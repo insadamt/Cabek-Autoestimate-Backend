@@ -6,11 +6,11 @@ use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    public function test_the_root_redirects_to_the_internal_price_explorer(): void
+    public function test_the_root_redirects_to_internal_statistics(): void
     {
         $response = $this->get('/');
 
-        $response->assertRedirectToRoute('internal.explorer');
+        $response->assertRedirectToRoute('internal.statistics');
     }
 
     public function test_the_json_import_screen_is_available(): void
