@@ -123,9 +123,9 @@ export default function PriceExplorer({
                     </div>
 
                     <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_360px]">
-                        <div className="rounded-2xl bg-slate-950 p-5 text-white shadow-sm sm:p-6">
-                            <div className="text-[11px] font-bold uppercase tracking-[0.17em] text-teal-300">Estimate basis</div>
-                            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
+                        <div className="rounded-2xl border border-teal-200 bg-teal-50 p-5 shadow-sm sm:p-6">
+                            <div className="text-[11px] font-bold uppercase tracking-[0.17em] text-teal-700">Estimate basis</div>
+                            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600">
                                 The estimate is calculated from matching historical market observations. Filters narrow the evidence set by production year, market type, and source without changing stored prices.
                             </p>
                         </div>
@@ -182,7 +182,7 @@ function SelectionPanel({ step, context, title, description, placeholder, items,
             <div className="flex items-center gap-2 border-b border-slate-200 bg-slate-50 px-5 py-4 text-xs font-semibold text-slate-400 sm:px-6">
                 {[1, 2, 3].map((number) => (
                     <div key={number} className="flex items-center gap-2">
-                        <span className={`grid size-7 place-items-center rounded-full ${number === step ? 'bg-slate-950 text-white' : number < step ? 'bg-teal-100 text-teal-800' : 'bg-white text-slate-400 ring-1 ring-slate-200'}`}>{number}</span>
+                        <span className={`grid size-7 place-items-center rounded-full ${number === step ? 'bg-teal-700 text-white' : number < step ? 'bg-teal-100 text-teal-800' : 'bg-white text-slate-400 ring-1 ring-slate-200'}`}>{number}</span>
                         <span className={number === step ? 'text-slate-900' : ''}>{['Marque', 'Model', 'Part'][number - 1]}</span>
                         {number < 3 ? <span className="text-slate-300">/</span> : null}
                     </div>
@@ -214,10 +214,10 @@ function SelectionPanel({ step, context, title, description, placeholder, items,
 
 function StatCard({ label, value, detail, primary = false }) {
     return (
-        <div className={`rounded-2xl border p-5 shadow-sm ${primary ? 'border-teal-700 bg-teal-700 text-white' : 'border-slate-200 bg-white text-slate-950'}`}>
-            <div className={`text-[11px] font-bold uppercase tracking-[0.15em] ${primary ? 'text-teal-100' : 'text-slate-400'}`}>{label}</div>
+        <div className={`rounded-2xl border p-5 shadow-sm ${primary ? 'border-teal-200 bg-teal-50 text-teal-950' : 'border-slate-200 bg-white text-slate-950'}`}>
+            <div className={`text-[11px] font-bold uppercase tracking-[0.15em] ${primary ? 'text-teal-700' : 'text-slate-400'}`}>{label}</div>
             <div className="mt-4 text-2xl font-semibold tracking-tight">{value}</div>
-            <div className={`mt-1.5 text-xs ${primary ? 'text-teal-100' : 'text-slate-500'}`}>{detail}</div>
+            <div className={`mt-1.5 text-xs ${primary ? 'text-teal-700' : 'text-slate-500'}`}>{detail}</div>
         </div>
     );
 }
