@@ -1,0 +1,60 @@
+name: Verify React Inertia redesign
+
+on:
+  push:
+    branches:
+      - redesign/react-inertia
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out redesign branch
+        uses: actions/checkout@v4
+        with:
+          ref: redesign/react-inertia
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.5'
+          coverage: none
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Resolve PHP dependencies
+        run: composer update inertiajs/inertia-laravel laravel/boost --with-all-dependencies --no-interaction --no-progress --no-scripts
+
+      - name: Discover Laravel packages
+        run: php artisan package:discover --ansi
+
+      - name: Install frontend dependencies
+        run: npm install --ignore-scripts
+
+      - name: Format changed PHP files
+        run: |
+          vendor/bin/pint --format agent app/Http/Controllers/Internal/PriceExplorerController.php
+          vendor/bin/pint --format agent app/Http/Middleware/HandleInertiaRequests.php
+          vendor/bin/pint --format agent bootstrap/app.php
+          vendor/bin/pint --format agent tests/Feature/ExampleTest.php
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run Laravel tests
+        run: php artisan test --compact
+
+      - name: Commit generated lockfiles and formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add composer.lock package-lock.json app/Http/Controllers/Internal/PriceExplorerController.php app/Http/Middleware/HandleInertiaRequests.php bootstrap/app.php tests/Feature/ExampleTest.php
+          git diff --cached --quiet || git commit -m "Lock React and Inertia dependencies"
+          git push origin HEAD:redesign/react-inertia
