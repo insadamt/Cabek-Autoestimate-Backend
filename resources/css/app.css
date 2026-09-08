@@ -12,13 +12,13 @@
 
 @layer base {
     html {
-        background: #f1f5f9;
+        background: #f8fafc;
     }
 
     body {
         min-width: 320px;
         min-height: 100vh;
-        background: #f1f5f9;
+        background: #f8fafc;
         color: #0f172a;
         font-family: var(--font-sans);
         -webkit-font-smoothing: antialiased;
