@@ -318,13 +318,6 @@
                                     @else
                                         <span class="text-slate-400">—</span>
                                     @endif
-
-                                    @if ($observation->details)
-                                        <details class="mt-1.5 text-xs text-slate-500">
-                                            <summary class="cursor-pointer select-none font-medium text-slate-600">Details</summary>
-                                            <div class="mt-1 max-w-md leading-5">{{ $observation->details }}</div>
-                                        </details>
-                                    @endif
                                 </td>
                             </tr>
                         @empty

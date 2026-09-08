@@ -50,10 +50,7 @@ class PartPriceObservationIngestor
                     continue;
                 }
 
-                $created = PartPriceObservation::create([
-                    ...$identity,
-                    'details' => $observation['details'] ?? null,
-                ]);
+                $created = PartPriceObservation::create($identity);
 
                 $insertedIds[] = $created->id;
             }

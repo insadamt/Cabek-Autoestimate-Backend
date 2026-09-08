@@ -22,7 +22,6 @@ class PartPriceObservation extends Model
         'price',
         'source_reference',
         'source_url',
-        'details',
         'observed_at',
     ];
 

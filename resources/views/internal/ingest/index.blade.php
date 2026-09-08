@@ -129,7 +129,6 @@
       "source": "Pieces Auto Maroc",
       "source_reference": null,
       "source_url": null,
-      "details": null,
       "observed_at": "2026-09-08 12:00:00"
     }
   ]

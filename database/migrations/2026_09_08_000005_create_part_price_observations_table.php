@@ -24,7 +24,6 @@ return new class extends Migration
 
             $table->string('source_reference', 255)->nullable();
             $table->text('source_url')->nullable();
-            $table->text('details')->nullable();
 
             $table->dateTime('observed_at');
             $table->timestamp('created_at')->nullable();

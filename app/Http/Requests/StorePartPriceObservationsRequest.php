@@ -23,7 +23,7 @@ class StorePartPriceObservationsRequest extends FormRequest
             'observations' => ['required', 'array', 'min:1', 'max:500'],
             'observations.*' => [
                 'required',
-                'array:marque,model,part,production_from,production_to,type,price,source,source_reference,source_url,details,observed_at',
+                'array:marque,model,part,production_from,production_to,type,price,source,source_reference,source_url,observed_at',
             ],
             'observations.*.marque' => ['required', 'string', 'max:100', 'exists:marques,libelle'],
             'observations.*.model' => ['required', 'string', 'max:150', 'exists:models,libelle'],
@@ -35,7 +35,6 @@ class StorePartPriceObservationsRequest extends FormRequest
             'observations.*.source' => ['required', 'string', 'max:150', 'exists:sources,libelle'],
             'observations.*.source_reference' => ['nullable', 'string', 'max:255'],
             'observations.*.source_url' => ['nullable', 'url', 'max:2048'],
-            'observations.*.details' => ['nullable', 'string', 'max:5000'],
             'observations.*.observed_at' => ['required', 'date_format:Y-m-d H:i:s', 'before_or_equal:now'],
         ];
     }
