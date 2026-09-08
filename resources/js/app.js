@@ -1,1 +1,1 @@
-//
+import './internal-price-explorer';
