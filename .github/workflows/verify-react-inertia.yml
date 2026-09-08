@@ -49,7 +49,7 @@ jobs:
         run: npm run build
 
       - name: Run Laravel tests
-        run: php artisan test --compact
+        run: APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')" php artisan test --compact
 
       - name: Commit generated lockfiles and formatting
         run: |
