@@ -2,18 +2,32 @@
 
 namespace Tests\Feature;
 
-// use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class ExampleTest extends TestCase
 {
-    /**
-     * A basic test example.
-     */
-    public function test_the_application_returns_a_successful_response(): void
+    public function test_the_root_redirects_to_the_internal_price_explorer(): void
     {
         $response = $this->get('/');
 
-        $response->assertStatus(200);
+        $response->assertRedirectToRoute('internal.explorer');
+    }
+
+    public function test_the_json_import_screen_is_available(): void
+    {
+        $response = $this->get('/internal/ingest');
+
+        $response
+            ->assertOk()
+            ->assertSee('JSON Import')
+            ->assertSee('Validate only')
+            ->assertSee('Import observations');
+    }
+
+    public function test_the_json_import_requires_a_file_or_pasted_payload(): void
+    {
+        $response = $this->post('/internal/ingest/validate');
+
+        $response->assertSessionHasErrors('json_file');
     }
 }
