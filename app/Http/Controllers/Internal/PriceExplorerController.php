@@ -12,11 +12,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
-use Illuminate\View\View;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class PriceExplorerController extends Controller
 {
-    public function index(Request $request): View
+    public function index(Request $request): Response
     {
         $filters = $request->validate([
             'marque' => ['nullable', 'integer', 'exists:marques,id'],
@@ -40,6 +41,14 @@ class PriceExplorerController extends Controller
             ? Marque::find($filters['marque'])
             : null;
 
+        $models = $selectedMarque
+            ? VehicleModel::query()
+                ->where('marque_id', $selectedMarque->id)
+                ->withCount('priceObservations')
+                ->orderBy('libelle')
+                ->get(['id', 'libelle'])
+            : collect();
+
         $selectedModel = null;
         if ($selectedMarque && isset($filters['model'])) {
             $selectedModel = VehicleModel::query()
@@ -47,6 +56,10 @@ class PriceExplorerController extends Controller
                 ->where('marque_id', $selectedMarque->id)
                 ->first();
         }
+
+        $parts = $selectedModel
+            ? $this->partsForModel($selectedModel)
+            : collect();
 
         $selectedPart = null;
         if ($selectedModel && isset($filters['part'])) {
@@ -61,7 +74,7 @@ class PriceExplorerController extends Controller
 
         if ($selectedModel && $selectedPart) {
             $query = PartPriceObservation::query()
-                ->with('source')
+                ->with('source:id,libelle')
                 ->where('model_id', $selectedModel->id)
                 ->where('part_id', $selectedPart->id);
 
@@ -103,19 +116,44 @@ class PriceExplorerController extends Controller
             $observations = (clone $query)
                 ->orderByDesc('observed_at')
                 ->paginate(50)
-                ->withQueryString();
+                ->withQueryString()
+                ->through(fn (PartPriceObservation $observation): array => [
+                    'id' => $observation->id,
+                    'production_from' => $observation->production_from,
+                    'production_to' => $observation->production_to,
+                    'type' => $observation->type,
+                    'price' => $observation->price,
+                    'source_reference' => $observation->source_reference,
+                    'source_url' => $observation->source_url,
+                    'observed_at' => $observation->observed_at?->toIso8601String(),
+                    'source' => $observation->source
+                        ? [
+                            'id' => $observation->source->id,
+                            'libelle' => $observation->source->libelle,
+                        ]
+                        : null,
+                ]);
         }
 
-        return view('internal.explorer.index', compact(
-            'marques',
-            'sources',
-            'selectedMarque',
-            'selectedModel',
-            'selectedPart',
-            'statistics',
-            'observations',
-            'filters',
-        ));
+        return Inertia::render('Internal/PriceExplorer', [
+            'marques' => $marques,
+            'models' => $models,
+            'parts' => $parts,
+            'sources' => $sources,
+            'selected' => [
+                'marque' => $this->vehicleResource($selectedMarque),
+                'model' => $this->vehicleResource($selectedModel),
+                'part' => $this->vehicleResource($selectedPart),
+            ],
+            'filters' => [
+                'year' => $filters['year'] ?? null,
+                'type' => $filters['type'] ?? null,
+                'source_id' => $filters['source_id'] ?? null,
+            ],
+            'statistics' => $statistics,
+            'observations' => $observations,
+            'maxYear' => now()->year + 1,
+        ]);
     }
 
     public function models(Marque $marque): JsonResponse
@@ -133,7 +171,14 @@ class PriceExplorerController extends Controller
 
     public function parts(VehicleModel $model): JsonResponse
     {
-        $parts = Part::query()
+        return response()->json([
+            'data' => $this->partsForModel($model),
+        ]);
+    }
+
+    private function partsForModel(VehicleModel $model): Collection
+    {
+        return Part::query()
             ->select('parts.id', 'parts.libelle')
             ->selectRaw('COUNT(part_price_observations.id) AS observations_count')
             ->join('part_price_observations', 'part_price_observations.part_id', '=', 'parts.id')
@@ -141,10 +186,18 @@ class PriceExplorerController extends Controller
             ->groupBy('parts.id', 'parts.libelle')
             ->orderBy('parts.libelle')
             ->get();
+    }
 
-        return response()->json([
-            'data' => $parts,
-        ]);
+    private function vehicleResource(Marque|VehicleModel|Part|null $record): ?array
+    {
+        if (! $record) {
+            return null;
+        }
+
+        return [
+            'id' => $record->id,
+            'libelle' => $record->libelle,
+        ];
     }
 
     private function calculateStatistics(Collection $prices): array
