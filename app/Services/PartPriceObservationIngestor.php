@@ -18,19 +18,14 @@ class PartPriceObservationIngestor
             $skippedDuplicates = 0;
 
             foreach ($observations as $observation) {
-                $marque = Marque::firstOrCreate([
-                    'libelle' => $observation['marque'],
-                ]);
+                $marque = Marque::where('libelle', $observation['marque'])->firstOrFail();
 
                 $vehicleModel = VehicleModel::firstOrCreate([
                     'marque_id' => $marque->id,
                     'libelle' => $observation['model'],
                 ]);
 
-                $part = Part::firstOrCreate([
-                    'libelle' => $observation['part'],
-                ]);
-
+                $part = Part::where('libelle', $observation['part'])->firstOrFail();
                 $source = Source::where('libelle', $observation['source'])->firstOrFail();
 
                 $identity = [
