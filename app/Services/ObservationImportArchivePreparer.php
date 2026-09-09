@@ -42,19 +42,8 @@ class ObservationImportArchivePreparer
             $actualUncompressedBytes = 0;
 
             foreach ($entries as $entry) {
-                $contents = $zip->getFromIndex($entry['index']);
-
-                if (! is_string($contents)) {
-                    throw new RuntimeException('Could not read '.$entry['name'].' from the ZIP archive.');
-                }
-
-                $actualBytes = strlen($contents);
-
-                if ($actualBytes > (int) config('observation_imports.max_json_bytes')) {
-                    throw new RuntimeException($entry['name'].' exceeds the 5 MB JSON file limit.');
-                }
-
-                $actualUncompressedBytes += $actualBytes;
+                $contents = $this->readEntry($zip, $entry);
+                $actualUncompressedBytes += strlen($contents);
 
                 if ($actualUncompressedBytes > (int) config('observation_imports.max_uncompressed_bytes')) {
                     throw new RuntimeException('The ZIP archive expands beyond the allowed uncompressed size.');
@@ -128,6 +117,10 @@ class ObservationImportArchivePreparer
                 continue;
             }
 
+            if (strlen($name) > 500) {
+                throw new RuntimeException('A ZIP entry name exceeds the 500 character limit.');
+            }
+
             if (strtolower(pathinfo($name, PATHINFO_EXTENSION)) !== 'json') {
                 throw new RuntimeException('ZIP archives may contain only JSON files. Unexpected entry: '.$name);
             }
@@ -159,6 +152,38 @@ class ObservationImportArchivePreparer
         }
 
         return $entries;
+    }
+
+    private function readEntry(ZipArchive $zip, array $entry): string
+    {
+        $stream = $zip->getStreamIndex($entry['index']);
+
+        if (! is_resource($stream)) {
+            throw new RuntimeException('Could not read '.$entry['name'].' from the ZIP archive.');
+        }
+
+        $contents = '';
+        $maxJsonBytes = (int) config('observation_imports.max_json_bytes');
+
+        try {
+            while (! feof($stream)) {
+                $chunk = fread($stream, 8192);
+
+                if ($chunk === false) {
+                    throw new RuntimeException('Could not read '.$entry['name'].' from the ZIP archive.');
+                }
+
+                $contents .= $chunk;
+
+                if (strlen($contents) > $maxJsonBytes) {
+                    throw new RuntimeException($entry['name'].' exceeds the 5 MB JSON file limit.');
+                }
+            }
+        } finally {
+            fclose($stream);
+        }
+
+        return $contents;
     }
 
     private function isSafeEntryName(string $name): bool

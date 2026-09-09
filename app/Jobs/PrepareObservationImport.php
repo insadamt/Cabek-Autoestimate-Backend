@@ -27,6 +27,18 @@ class PrepareObservationImport implements ShouldQueue
     ): void {
         $observationImport = ObservationImport::findOrFail($this->observationImportId);
 
+        if ($observationImport->status === 'validating') {
+            $workflow->dispatchNextValidation($observationImport);
+
+            return;
+        }
+
+        if ($observationImport->status === 'importing') {
+            $workflow->dispatchNextImport($observationImport);
+
+            return;
+        }
+
         if (! in_array($observationImport->status, ['queued', 'preparing'], true)) {
             return;
         }

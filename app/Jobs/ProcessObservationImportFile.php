@@ -8,6 +8,7 @@ use App\Services\PartPriceObservationIngestor;
 use App\Services\PartPriceObservationPayloadValidator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Throwable;
 
@@ -30,6 +31,13 @@ class ProcessObservationImportFile implements ShouldQueue
     ): void {
         $importFile = ObservationImportFile::with('observationImport')->findOrFail($this->observationImportFileId);
 
+        if ($importFile->status === 'completed') {
+            Storage::disk('local')->delete($importFile->stored_path);
+            $workflow->dispatchNextImport($importFile->observationImport);
+
+            return;
+        }
+
         if (! in_array($importFile->status, ['queued', 'importing'], true)) {
             return;
         }
@@ -43,31 +51,36 @@ class ProcessObservationImportFile implements ShouldQueue
         try {
             $rawJson = Storage::disk('local')->get($importFile->stored_path);
             $observations = $payloadValidator->validateRawJson($rawJson, 'json_file');
-            $result = $ingestor->ingest($observations);
+
+            $result = DB::transaction(function () use ($importFile, $ingestor, $observations): array {
+                $result = $ingestor->ingest($observations);
+
+                $importFile->update([
+                    'status' => 'completed',
+                    'observation_count' => $result['received'],
+                    'inserted_count' => $result['inserted'],
+                    'duplicate_count' => $result['skipped_duplicates'],
+                    'finished_at' => now(),
+                ]);
+
+                $observationImport = $importFile->observationImport()->firstOrFail();
+                $observationImport->processed_files++;
+                $observationImport->processed_observations += $result['received'];
+                $observationImport->inserted_observations += $result['inserted'];
+                $observationImport->duplicate_observations += $result['skipped_duplicates'];
+                $observationImport->save();
+
+                return $result;
+            });
         } catch (Throwable $exception) {
             $importFile->update(['status' => 'queued']);
 
             throw $exception;
         }
 
-        $importFile->update([
-            'status' => 'completed',
-            'observation_count' => $result['received'],
-            'inserted_count' => $result['inserted'],
-            'duplicate_count' => $result['skipped_duplicates'],
-            'finished_at' => now(),
-        ]);
-
         Storage::disk('local')->delete($importFile->stored_path);
 
-        $observationImport = $importFile->observationImport;
-        $observationImport->processed_files++;
-        $observationImport->processed_observations += $result['received'];
-        $observationImport->inserted_observations += $result['inserted'];
-        $observationImport->duplicate_observations += $result['skipped_duplicates'];
-        $observationImport->save();
-
-        $workflow->dispatchNextImport($observationImport);
+        $workflow->dispatchNextImport($importFile->observationImport()->firstOrFail());
     }
 
     public function failed(?Throwable $exception): void

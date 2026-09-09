@@ -7,6 +7,7 @@ use App\Services\ObservationImportWorkflow;
 use App\Services\PartPriceObservationPayloadValidator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -28,6 +29,19 @@ class ValidateObservationImportFile implements ShouldQueue
         ObservationImportWorkflow $workflow,
     ): void {
         $importFile = ObservationImportFile::with('observationImport')->findOrFail($this->observationImportFileId);
+        $observationImport = $importFile->observationImport;
+
+        if ($observationImport->status === 'importing') {
+            $workflow->dispatchNextImport($observationImport);
+
+            return;
+        }
+
+        if (in_array($importFile->status, ['valid', 'failed'], true)) {
+            $workflow->dispatchNextValidation($observationImport);
+
+            return;
+        }
 
         if (! in_array($importFile->status, ['pending_validation', 'validating'], true)) {
             return;
@@ -43,16 +57,18 @@ class ValidateObservationImportFile implements ShouldQueue
             $rawJson = Storage::disk('local')->get($importFile->stored_path);
             $observations = $payloadValidator->validateRawJson($rawJson, 'json_file');
         } catch (ValidationException $exception) {
-            $importFile->update([
-                'status' => 'failed',
-                'error_message' => $this->validationMessage($exception),
-                'finished_at' => now(),
-            ]);
+            DB::transaction(function () use ($importFile, $observationImport, $exception): void {
+                $importFile->update([
+                    'status' => 'failed',
+                    'error_message' => $this->validationMessage($exception),
+                    'finished_at' => now(),
+                ]);
 
-            $observationImport = $importFile->observationImport;
-            $observationImport->validated_files++;
-            $observationImport->failed_files++;
-            $observationImport->save();
+                $observationImport->refresh();
+                $observationImport->validated_files++;
+                $observationImport->failed_files++;
+                $observationImport->save();
+            });
 
             $workflow->dispatchNextValidation($observationImport);
 
@@ -63,16 +79,18 @@ class ValidateObservationImportFile implements ShouldQueue
             throw $exception;
         }
 
-        $importFile->update([
-            'status' => 'valid',
-            'observation_count' => count($observations),
-            'finished_at' => now(),
-        ]);
+        DB::transaction(function () use ($importFile, $observationImport, $observations): void {
+            $importFile->update([
+                'status' => 'valid',
+                'observation_count' => count($observations),
+                'finished_at' => now(),
+            ]);
 
-        $observationImport = $importFile->observationImport;
-        $observationImport->validated_files++;
-        $observationImport->total_observations += count($observations);
-        $observationImport->save();
+            $observationImport->refresh();
+            $observationImport->validated_files++;
+            $observationImport->total_observations += count($observations);
+            $observationImport->save();
+        });
 
         $workflow->dispatchNextValidation($observationImport);
     }

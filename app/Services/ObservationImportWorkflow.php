@@ -14,6 +14,10 @@ class ObservationImportWorkflow
     {
         $observationImport->refresh();
 
+        if ($observationImport->status !== 'validating') {
+            return;
+        }
+
         $nextFile = $observationImport->files()
             ->where('status', 'pending_validation')
             ->orderBy('position')
@@ -55,6 +59,12 @@ class ObservationImportWorkflow
     {
         $observationImport->refresh();
 
+        if ($observationImport->status === 'importing') {
+            $this->dispatchNextImport($observationImport);
+
+            return;
+        }
+
         if (! in_array($observationImport->status, ['ready', 'validating'], true)) {
             throw new RuntimeException('This import is not ready to start.');
         }
@@ -83,6 +93,10 @@ class ObservationImportWorkflow
     public function dispatchNextImport(ObservationImport $observationImport): void
     {
         $observationImport->refresh();
+
+        if ($observationImport->status !== 'importing') {
+            return;
+        }
 
         $nextFile = $observationImport->files()
             ->where('status', 'queued')
