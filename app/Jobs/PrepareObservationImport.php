@@ -7,6 +7,7 @@ use App\Services\ObservationImportArchivePreparer;
 use App\Services\ObservationImportWorkflow;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class PrepareObservationImport implements ShouldQueue
@@ -64,7 +65,12 @@ class PrepareObservationImport implements ShouldQueue
             return;
         }
 
+        if (is_string($observationImport->archive_path)) {
+            Storage::disk('local')->delete($observationImport->archive_path);
+        }
+
         $observationImport->update([
+            'archive_path' => null,
             'status' => 'failed',
             'error_message' => $exception?->getMessage() ?? 'The ZIP archive could not be prepared.',
             'finished_at' => now(),

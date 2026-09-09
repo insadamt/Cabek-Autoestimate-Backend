@@ -113,25 +113,30 @@ class ObservationImportController extends Controller
         }
 
         if ($observationImport->status === 'importing') {
-            $progress = $observationImport->total_files > 0
-                ? (int) floor(($observationImport->processed_files / $observationImport->total_files) * 100)
-                : 0;
-
-            return ['Importing JSON files', min($progress, 100)];
+            return ['Importing JSON files', $this->percentage($observationImport->processed_files, $observationImport->total_files)];
         }
 
         if ($observationImport->status === 'validating') {
-            $progress = $observationImport->total_files > 0
-                ? (int) floor(($observationImport->validated_files / $observationImport->total_files) * 100)
-                : 0;
-
-            return ['Validating JSON files', min($progress, 100)];
+            return ['Validating JSON files', $this->percentage($observationImport->validated_files, $observationImport->total_files)];
         }
 
         if ($observationImport->status === 'failed') {
-            return ['Failed', 0];
+            $completedSteps = $observationImport->processed_files > 0
+                ? $observationImport->processed_files
+                : $observationImport->validated_files;
+
+            return ['Failed', $this->percentage($completedSteps, $observationImport->total_files)];
         }
 
         return ['Preparing archive', 0];
+    }
+
+    private function percentage(int $completed, int $total): int
+    {
+        if ($total < 1) {
+            return 0;
+        }
+
+        return min((int) floor(($completed / $total) * 100), 100);
     }
 }

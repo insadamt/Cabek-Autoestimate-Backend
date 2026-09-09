@@ -34,6 +34,8 @@ class ObservationImportWorkflow
         }
 
         if ($observationImport->failed_files > 0) {
+            Storage::disk('local')->deleteDirectory('observation-imports/'.$observationImport->id.'/files');
+
             $observationImport->update([
                 'status' => 'failed',
                 'error_message' => 'Validation failed for '.$observationImport->failed_files.' JSON file(s). Nothing was imported.',
@@ -79,7 +81,12 @@ class ObservationImportWorkflow
 
         $observationImport->files()
             ->where('status', 'valid')
-            ->update(['status' => 'queued']);
+            ->update([
+                'status' => 'queued',
+                'started_at' => null,
+                'finished_at' => null,
+                'error_message' => null,
+            ]);
 
         $observationImport->update([
             'status' => 'importing',
