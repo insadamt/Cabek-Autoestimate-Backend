@@ -1,14 +1,14 @@
 @extends('internal.layout')
 
-@section('title', 'JSON Import · Cabek AutoEstimate')
+@section('title', 'Data Import · Cabek AutoEstimate')
 
 @section('content')
     <div class="mb-5 flex flex-wrap items-end justify-between gap-3">
         <div>
-            <h1 class="text-xl font-semibold text-slate-950">JSON Import</h1>
-            <p class="mt-1 text-sm text-slate-600">Validate and import historical part-price observations.</p>
+            <h1 class="text-xl font-semibold text-slate-950">Observation Import</h1>
+            <p class="mt-1 text-sm text-slate-600">Validate and import historical part-price observations from JSON or queued ZIP batches.</p>
         </div>
-        <div class="text-xs text-slate-500">Up to 500 observations · 5 MB maximum</div>
+        <div class="text-xs text-slate-500">JSON: 500 observations / 5 MB · ZIP: 100 MB / 1,000 JSON files</div>
     </div>
 
     @if ($errors->any())
@@ -40,7 +40,7 @@
         <div class="mb-5 border border-emerald-300 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
             <div class="font-medium">Payload is valid — {{ $preview['received'] }} observations.</div>
             @if (($preview['source'] ?? null) === 'file')
-                <p class="mt-1 text-xs text-emerald-800">Re-select the same file below, then click Import observations. Browsers do not retain file selections after validation.</p>
+                <p class="mt-1 text-xs text-emerald-800">Re-select the same JSON file below, then click Import observations. Browsers do not retain file selections after validation.</p>
             @else
                 <p class="mt-1 text-xs text-emerald-800">The validated pasted JSON is still in the form below. You can import it now.</p>
             @endif
@@ -51,22 +51,24 @@
         <section class="border border-slate-300 bg-white">
             <div class="border-b border-slate-300 px-4 py-3">
                 <h2 class="text-sm font-semibold text-slate-950">Payload</h2>
-                <p class="mt-0.5 text-xs text-slate-500">All rows are validated before anything is written to the database.</p>
+                <p class="mt-0.5 text-xs text-slate-500">Single JSON imports remain synchronous. ZIP archives are validated and imported JSON-by-JSON through the queue.</p>
             </div>
 
             <form method="POST" action="{{ route('internal.ingest.store') }}" enctype="multipart/form-data" class="space-y-5 p-4 sm:p-5">
                 @csrf
 
                 <div>
-                    <label for="json_file" class="mb-1.5 block text-sm font-medium text-slate-800">Upload a JSON file</label>
+                    <label for="json_file" class="mb-1.5 block text-sm font-medium text-slate-800">Upload JSON or ZIP</label>
                     <input
                         id="json_file"
                         name="json_file"
                         type="file"
-                        accept="application/json,.json"
+                        accept="application/json,application/zip,.json,.zip"
                         class="block w-full rounded-md border border-slate-300 bg-white text-sm text-slate-700 file:mr-4 file:border-0 file:border-r file:border-slate-300 file:bg-slate-50 file:px-3 file:py-2 file:text-sm file:font-medium file:text-slate-700"
                     >
-                    <p class="mt-1.5 text-xs text-slate-500">Only .json files are accepted. If a file is selected, it takes priority over pasted JSON.</p>
+                    <p class="mt-1.5 text-xs leading-5 text-slate-500">
+                        JSON: maximum 5 MB and 500 observations. ZIP: maximum 100 MB, up to 1,000 JSON files, and 512 MB uncompressed. If a file is selected, it takes priority over pasted JSON.
+                    </p>
                     @error('json_file')
                         <p class="mt-1.5 text-xs font-medium text-red-700">{{ $message }}</p>
                     @enderror
@@ -95,7 +97,7 @@
 
                 <div class="flex flex-col gap-3 border-t border-slate-200 pt-4 sm:flex-row sm:items-center sm:justify-between">
                     <p class="max-w-xl text-xs leading-5 text-slate-500">
-                        Import is safe to submit directly: validation runs first, and invalid payloads are rejected before insertion.
+                        For ZIP files, every JSON is validated before import begins. Large imports continue in the queue even if this browser page is closed.
                     </p>
                     <div class="flex shrink-0 flex-wrap gap-2">
                         <button
@@ -133,6 +135,20 @@
     }
   ]
 }</code></pre>
+            </details>
+
+            <details class="border border-slate-300 bg-white">
+                <summary class="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-slate-950">ZIP behavior</summary>
+                <div class="border-t border-slate-200 p-4 text-xs leading-5 text-slate-600">
+                    <ul class="list-disc space-y-1.5 pl-5">
+                        <li>Nested folders are allowed.</li>
+                        <li>macOS metadata is ignored.</li>
+                        <li>Any other non-JSON file rejects the archive.</li>
+                        <li>Unsafe archive paths and oversized extracted content are rejected.</li>
+                        <li>JSON files are validated sequentially before any observation is inserted.</li>
+                        <li>After validation succeeds, JSON files are imported sequentially and progress is tracked.</li>
+                    </ul>
+                </div>
             </details>
 
             <details class="border border-slate-300 bg-white">
