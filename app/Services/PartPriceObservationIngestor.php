@@ -11,6 +11,14 @@ use Illuminate\Support\Facades\DB;
 
 class PartPriceObservationIngestor
 {
+    private array $marqueIds = [];
+
+    private array $modelIds = [];
+
+    private array $partIds = [];
+
+    private array $sourceIds = [];
+
     public function ingest(array $observations): array
     {
         return DB::transaction(function () use ($observations): array {
@@ -18,20 +26,15 @@ class PartPriceObservationIngestor
             $skippedDuplicates = 0;
 
             foreach ($observations as $observation) {
-                $marque = Marque::where('libelle', $observation['marque'])->firstOrFail();
-
-                $vehicleModel = VehicleModel::query()
-                    ->where('marque_id', $marque->id)
-                    ->where('libelle', $observation['model'])
-                    ->firstOrFail();
-
-                $part = Part::where('libelle', $observation['part'])->firstOrFail();
-                $source = Source::where('libelle', $observation['source'])->firstOrFail();
+                $marqueId = $this->marqueId($observation['marque']);
+                $modelId = $this->modelId($marqueId, $observation['model']);
+                $partId = $this->partId($observation['part']);
+                $sourceId = $this->sourceId($observation['source']);
 
                 $identity = [
-                    'model_id' => $vehicleModel->id,
-                    'part_id' => $part->id,
-                    'source_id' => $source->id,
+                    'model_id' => $modelId,
+                    'part_id' => $partId,
+                    'source_id' => $sourceId,
                     'production_from' => $observation['production_from'] ?? null,
                     'production_to' => $observation['production_to'] ?? null,
                     'type' => $observation['type'],
@@ -41,17 +44,12 @@ class PartPriceObservationIngestor
                     'observed_at' => $observation['observed_at'],
                 ];
 
-                $existing = PartPriceObservation::query()
-                    ->where($identity)
-                    ->first();
-
-                if ($existing) {
+                if (PartPriceObservation::query()->where($identity)->exists()) {
                     $skippedDuplicates++;
                     continue;
                 }
 
                 $created = PartPriceObservation::create($identity);
-
                 $insertedIds[] = $created->id;
             }
 
@@ -62,5 +60,40 @@ class PartPriceObservationIngestor
                 'inserted_ids' => $insertedIds,
             ];
         });
+    }
+
+    private function marqueId(string $libelle): int
+    {
+        return $this->marqueIds[$libelle] ??= Marque::query()
+            ->where('libelle', $libelle)
+            ->firstOrFail()
+            ->id;
+    }
+
+    private function modelId(int $marqueId, string $libelle): int
+    {
+        $key = $marqueId."\0".$libelle;
+
+        return $this->modelIds[$key] ??= VehicleModel::query()
+            ->where('marque_id', $marqueId)
+            ->where('libelle', $libelle)
+            ->firstOrFail()
+            ->id;
+    }
+
+    private function partId(string $libelle): int
+    {
+        return $this->partIds[$libelle] ??= Part::query()
+            ->where('libelle', $libelle)
+            ->firstOrFail()
+            ->id;
+    }
+
+    private function sourceId(string $libelle): int
+    {
+        return $this->sourceIds[$libelle] ??= Source::query()
+            ->where('libelle', $libelle)
+            ->firstOrFail()
+            ->id;
     }
 }

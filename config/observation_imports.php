@@ -5,5 +5,4 @@ return [
     'max_json_files' => 1000,
     'max_json_bytes' => 5 * 1024 * 1024,
     'max_uncompressed_bytes' => 512 * 1024 * 1024,
-    'status_poll_ms' => 1500,
 ];

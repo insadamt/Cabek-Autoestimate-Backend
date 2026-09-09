@@ -1,58 +1,181 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Cabek AutoEstimate Backend
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Laravel backend for Cabek AutoEstimate's normalized car-part pricing database.
 
-## About Laravel
+The production-facing application is intentionally focused on **querying and analysing price observations**. Data ingestion is an internal/local CLI workflow and is not exposed through a browser or HTTP API.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Local data workflow
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
-
-```bash
-composer require laravel/boost --dev
-
-php artisan boost:install
+```text
+Scrapers
+   ↓
+Normalization AI
+   ↓
+Import-ready JSON / ZIP
+   ↓
+Artisan CLI importer
+   ↓
+Local verified database
+   ↓
+Database dump / migration to the company server
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Setup
 
-## Contributing
+```bash
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
+php artisan db:seed
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Configure the local database connection in `.env` before importing observations.
 
-## Code of Conduct
+# Observation importer
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+The importer accepts:
 
-## Security Vulnerabilities
+- one normalized `.json` file;
+- a directory containing normalized JSON batches;
+- a `.zip` containing normalized JSON batches.
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+The command is:
 
-## License
+```bash
+php artisan observations:import <path>
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+Examples:
+
+```bash
+php artisan observations:import normalized_import_batch_001.json
+```
+
+```bash
+php artisan observations:import ./normalized-output/
+```
+
+```bash
+php artisan observations:import normalized-output.zip
+```
+
+## Safe dry run
+
+Validate the complete input without writing anything to the database:
+
+```bash
+php artisan observations:import normalized-output.zip --dry-run
+```
+
+The importer performs a complete preflight first. If **any** import batch fails validation, no observations are imported.
+
+Validation includes the canonical marque/model/part/source rules already used by the backend, model-to-marque consistency, allowed part types, price rules, production-year ordering, timestamp format, and the maximum 500 observations per JSON file.
+
+Each JSON file is also limited to the configured 5 MB maximum.
+
+## Non-interactive import
+
+Skip the confirmation prompt:
+
+```bash
+php artisan observations:import normalized-output.zip --yes
+```
+
+This is useful in scripts after a successful dry run.
+
+## JSON audit report
+
+Write a machine-readable summary:
+
+```bash
+php artisan observations:import normalized-output.zip \
+  --dry-run \
+  --report=storage/import-reports/preflight.json
+```
+
+Or for the real import:
+
+```bash
+php artisan observations:import normalized-output.zip \
+  --yes \
+  --report=storage/import-reports/import.json
+```
+
+The report includes file counts, observation counts, inserted rows, skipped exact duplicates, duration, and validation/import errors when applicable.
+
+## Normalization review files
+
+A normalization package may contain:
+
+```text
+normalized_import_batch_001.json
+normalized_import_batch_002.json
+normalization_review.json
+```
+
+`normalization_review.json` is an audit/recovery artifact, not an import file. The CLI importer automatically ignores that exact filename.
+
+## Resume / rerun behavior
+
+The database ingestor checks the full observation identity before insertion. Re-running the same normalized batches is therefore duplicate-safe: already imported observations are skipped and reported as duplicates rather than inserted again.
+
+This is useful if a long import is interrupted after some files have already completed.
+
+## Import limits
+
+Configured in `config/observation_imports.php`:
+
+- ZIP: 100 MB compressed maximum;
+- up to 1000 JSON batch files;
+- 5 MB maximum per JSON file;
+- 512 MB maximum total expanded JSON data;
+- maximum 500 observations per JSON file through payload validation.
+
+## Web application
+
+Internal web tools currently expose:
+
+- Statistics
+- Price Explorer
+
+Observation importing is deliberately **not available** under `/internal` and no `/api/ingest` endpoint is exposed.
+
+# Moving the finished database to the server
+
+Once the local dataset is verified, transfer the database using the database engine's normal dump/restore tooling rather than rebuilding the dataset through the production web application.
+
+For MySQL/MariaDB, for example:
+
+```bash
+mysqldump -u <user> -p <database> > cabek_autoestimate.sql
+```
+
+Restore on the server:
+
+```bash
+mysql -u <user> -p <database> < cabek_autoestimate.sql
+```
+
+Keep the local importer available for future refresh cycles such as:
+
+```text
+new scrape
+→ normalization
+→ dry-run
+→ local import
+→ verification
+→ controlled database update
+```
+
+# Tests
+
+```bash
+composer test
+```
+
+or:
+
+```bash
+php artisan test
+```

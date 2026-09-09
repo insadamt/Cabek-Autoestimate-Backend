@@ -32,13 +32,6 @@
                 >
                     Price Explorer
                 </a>
-                <a
-                    href="{{ route('internal.ingest') }}"
-                    @if (request()->routeIs('internal.ingest*', 'internal.imports.*')) aria-current="page" @endif
-                    class="border-b-2 py-3 font-medium {{ request()->routeIs('internal.ingest*', 'internal.imports.*') ? 'border-slate-950 text-slate-950' : 'border-transparent text-slate-500 hover:text-slate-900' }}"
-                >
-                    Data Import
-                </a>
             </nav>
         </div>
     </header>
