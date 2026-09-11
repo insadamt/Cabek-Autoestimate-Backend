@@ -51,7 +51,7 @@ class EstimationController extends Controller
                     'libelle' => $part->libelle,
                 ],
                 'type' => $filters['type'],
-                'year' => $filters['year'] ?? null,
+                'year' => isset($filters['year']) ? (int) $filters['year'] : null,
                 'source' => $source ? [
                     'id' => $source->id,
                     'libelle' => $source->libelle,

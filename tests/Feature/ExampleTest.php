@@ -13,21 +13,9 @@ class ExampleTest extends TestCase
         $response->assertRedirectToRoute('internal.statistics');
     }
 
-    public function test_the_json_import_screen_is_available(): void
+    public function test_the_json_import_http_surface_is_not_exposed(): void
     {
-        $response = $this->get('/internal/ingest');
-
-        $response
-            ->assertOk()
-            ->assertSee('JSON Import')
-            ->assertSee('Validate only')
-            ->assertSee('Import observations');
-    }
-
-    public function test_the_json_import_requires_a_file_or_pasted_payload(): void
-    {
-        $response = $this->post('/internal/ingest/validate');
-
-        $response->assertSessionHasErrors('json_payload');
+        $this->get('/internal/ingest')->assertNotFound();
+        $this->post('/internal/ingest/validate')->assertNotFound();
     }
 }
