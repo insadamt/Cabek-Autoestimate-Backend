@@ -93,20 +93,22 @@ class PriceExplorerController extends Controller
             if (isset($filters['year'])) {
                 $year = (int) $filters['year'];
 
-                $query->where(function ($yearQuery) use ($year): void {
-                    $yearQuery
-                        ->where(function ($knownRange) use ($year): void {
-                            $knownRange
-                                ->where(function ($from) use ($year): void {
-                                    $from->whereNull('production_from')
-                                        ->orWhere('production_from', '<=', $year);
-                                })
-                                ->where(function ($to) use ($year): void {
-                                    $to->whereNull('production_to')
-                                        ->orWhere('production_to', '>=', $year);
-                                });
-                        });
-                });
+                $query
+                    ->where(function ($fromQuery) use ($year): void {
+                        $fromQuery
+                            ->whereNull('production_from')
+                            ->orWhere('production_from', '<=', $year);
+                    })
+                    ->where(function ($toQuery) use ($year): void {
+                        $toQuery
+                            ->whereNull('production_to')
+                            ->orWhere('production_to', '>', $year);
+                    })
+                    ->where(function ($knownRangeQuery): void {
+                        $knownRangeQuery
+                            ->whereNotNull('production_from')
+                            ->orWhereNotNull('production_to');
+                    });
             }
 
             if (isset($filters['type'])) {
