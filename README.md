@@ -10,6 +10,7 @@ The backend also provides internal statistics and price-exploration tools, plus 
 - Laravel 13
 - MariaDB / MySQL-compatible relational database
 - Vite + Tailwind CSS for the internal web interface
+- Docker Compose for production deployment
 - PHPUnit through Laravel's test runner
 
 ## Data flow
@@ -78,7 +79,7 @@ GET /api/v1/estimation
 GET /api/v1/observations
 ```
 
-All API requests require an application bearer token. See [API v1](docs/api.md) and [Authentication](docs/authentication.md).
+All API requests require an application API key transmitted with the Bearer authorization scheme. See [API v1](docs/api.md) and [Authentication](docs/authentication.md).
 
 ## CLI importer
 
@@ -87,6 +88,12 @@ php artisan observations:import <path>
 ```
 
 The importer accepts normalized JSON files, directories of JSON batches, and ZIP archives. See [Importer](docs/importer.md).
+
+## Production deployment
+
+AutoEstimate includes a Docker Compose production stack with separate Nginx, PHP-FPM/Laravel, and MariaDB services.
+
+See [Deployment](docs/deployment.md).
 
 ## Tests
 
@@ -108,5 +115,6 @@ composer test
 - [Database](docs/database.md)
 - [Importer](docs/importer.md)
 - [Normalization](docs/normalization.md)
+- [Deployment](docs/deployment.md)
 
 The canonical AI normalization instructions are versioned in [`normalization/Data_Normalization_instructions_v2.1.6.md`](normalization/Data_Normalization_instructions_v2.1.6.md).
