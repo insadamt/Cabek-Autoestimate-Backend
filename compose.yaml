@@ -1,3 +1,7 @@
+# Production usage:
+#   docker compose --env-file .env.production <command>
+# Keep the project's .env file for local Laravel development.
+
 services:
   app:
     build:
@@ -18,9 +22,9 @@ services:
       DB_CONNECTION: mariadb
       DB_HOST: database
       DB_PORT: 3306
-      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set in .env}
-      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set in .env}
-      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
+      DB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set in .env.production}
+      DB_USERNAME: ${DB_USERNAME:?DB_USERNAME must be set in .env.production}
+      DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env.production}
       SESSION_DRIVER: ${SESSION_DRIVER:-database}
       SESSION_LIFETIME: ${SESSION_LIFETIME:-120}
       SESSION_ENCRYPT: ${SESSION_ENCRYPT:-false}
@@ -56,10 +60,10 @@ services:
     image: mariadb:11.8
     restart: unless-stopped
     environment:
-      MARIADB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set in .env}
-      MARIADB_USER: ${DB_USERNAME:?DB_USERNAME must be set in .env}
-      MARIADB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env}
-      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD must be set in .env}
+      MARIADB_DATABASE: ${DB_DATABASE:?DB_DATABASE must be set in .env.production}
+      MARIADB_USER: ${DB_USERNAME:?DB_USERNAME must be set in .env.production}
+      MARIADB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD must be set in .env.production}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD must be set in .env.production}
     command:
       - --character-set-server=utf8mb4
       - --collation-server=utf8mb4_unicode_ci

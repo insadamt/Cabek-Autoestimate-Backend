@@ -32,16 +32,18 @@ RUN chmod +x /usr/local/bin/autoestimate-entrypoint
 FROM php-base AS vendor
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 COPY . .
-RUN composer install \
-    --no-dev \
-    --prefer-dist \
-    --no-interaction \
-    --no-progress \
-    --optimize-autoloader
+RUN rm -f bootstrap/cache/*.php \
+    && composer install \
+        --no-dev \
+        --prefer-dist \
+        --no-interaction \
+        --no-progress \
+        --optimize-autoloader
 
 FROM php-base AS app
 COPY --chown=www-data:www-data . .
 COPY --from=vendor --chown=www-data:www-data /var/www/html/vendor ./vendor
+COPY --from=vendor --chown=www-data:www-data /var/www/html/bootstrap/cache ./bootstrap/cache
 COPY --from=frontend --chown=www-data:www-data /build/public/build ./public/build
 
 RUN mkdir -p \

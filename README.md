@@ -40,6 +40,8 @@ See [Architecture](docs/architecture.md) and [Normalization](docs/normalization.
 
 ## Quick start
 
+Local development uses `.env`:
+
 ```bash
 composer install
 npm install
@@ -47,7 +49,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Configure the database connection in `.env`, then run:
+Configure the local database connection in `.env`, then run:
 
 ```bash
 php artisan migrate
@@ -60,6 +62,23 @@ For local development:
 ```bash
 composer run dev
 ```
+
+## Production Docker
+
+Production uses a separate untracked `.env.production` file. Do not replace the local `.env` with production settings.
+
+```bash
+cp .env.production.example .env.production
+```
+
+Configure the production values, then run Docker Compose explicitly with that file:
+
+```bash
+docker compose --env-file .env.production build --pull
+docker compose --env-file .env.production up -d
+```
+
+See [Deployment](docs/deployment.md) for the complete production workflow.
 
 ## API
 
