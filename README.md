@@ -6,12 +6,13 @@ The backend also provides internal statistics and price-exploration tools, plus 
 
 ## Technology
 
-- PHP 8.3+
+- PHP 8.4.1+ for the current locked dependency set
 - Laravel 13
 - MariaDB / MySQL-compatible relational database
 - Vite + Tailwind CSS for the internal web interface
-- Docker Compose for production deployment
 - PHPUnit through Laravel's test runner
+
+> `composer.json` still permits PHP 8.3, but the current `composer.lock` resolves Symfony 8.1 packages that require PHP 8.4.1 or newer. The production Docker image therefore uses PHP 8.4.
 
 ## Data flow
 
@@ -79,7 +80,7 @@ GET /api/v1/estimation
 GET /api/v1/observations
 ```
 
-All API requests require an application API key transmitted with the Bearer authorization scheme. See [API v1](docs/api.md) and [Authentication](docs/authentication.md).
+All API requests require an application bearer token. See [API v1](docs/api.md) and [Authentication](docs/authentication.md).
 
 ## CLI importer
 
@@ -88,12 +89,6 @@ php artisan observations:import <path>
 ```
 
 The importer accepts normalized JSON files, directories of JSON batches, and ZIP archives. See [Importer](docs/importer.md).
-
-## Production deployment
-
-AutoEstimate includes a Docker Compose production stack with separate Nginx, PHP-FPM/Laravel, and MariaDB services.
-
-See [Deployment](docs/deployment.md).
 
 ## Tests
 
