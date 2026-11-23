@@ -1,3 +1,5 @@
+# Ignore Laravel runtime data, credentials and private assistant tooling.
+# Depends on the native Laravel, Docker and workstation layout.
 *.log
 .DS_Store
 .env
@@ -25,3 +27,14 @@ _ide_helper.php
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Keep private assistant tooling and workstation instructions out of releases.
+.agents/
+.codex/
+.aws/
+.claude/
+.cursor/
+.ai/
+.instructions.md
+.instruction.md
+.instrcutions.md
